@@ -1,94 +1,50 @@
-import { useEffect, useRef, useState } from "react";
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Live Camera Monitor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
 
-export default function MobileCameraLiveMonitor() {
-  const videoRef = useRef(null);
-  const audioRef = useRef(null);
-  const streamRef = useRef(null);
+<body style="text-align:center;font-family:sans-serif">
 
-  const [running, setRunning] = useState(false);
-  const [error, setError] = useState("");
+<h2>📱 Live Camera Monitor</h2>
 
-  const start = async () => {
-    setError("");
+<video id="video" autoplay playsinline style="width:100%;border-radius:10px"></video>
 
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" }, // back camera
-        audio: true
-      });
+<audio id="audio" autoplay></audio>
 
-      streamRef.current = stream;
+<br><br>
 
-      // video output
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
+<button onclick="startCamera()">▶ Start</button>
+<button onclick="stopCamera()">⏹ Stop</button>
 
-      // LIVE AUDIO MONITORING (mic -> headphones)
-      if (audioRef.current) {
-        audioRef.current.srcObject = stream;
-        await audioRef.current.play();
-      }
+<p id="error" style="color:red"></p>
 
-      setRunning(true);
-    } catch (err) {
-      setError("Camera/Microphone permission denied or not supported.");
-    }
-  };
+<script>
+let stream;
 
-  const stop = () => {
-    const stream = streamRef.current;
+async function startCamera() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" },
+      audio: true
+    });
 
-    if (stream) {
-      stream.getTracks().forEach((t) => t.stop());
-    }
+    document.getElementById("video").srcObject = stream;
+    document.getElementById("audio").srcObject = stream;
 
-    if (videoRef.current) videoRef.current.srcObject = null;
-    if (audioRef.current) audioRef.current.srcObject = null;
-
-    streamRef.current = null;
-    setRunning(false);
-  };
-
-  useEffect(() => {
-    return () => stop();
-  }, []);
-
-  return (
-    <div style={{ padding: 12, textAlign: "center" }}>
-      <h2>📱 Live Camera + Monitoring</h2>
-
-      {error && (
-        <p style={{ color: "red" }}>{error}</p>
-      )}
-
-      <video
-        ref={videoRef}
-        style={{ width: "100%", borderRadius: 12 }}
-        playsInline
-        autoPlay
-        muted
-      />
-
-      {/* hidden audio monitor output */}
-      <audio ref={audioRef} autoPlay />
-
-      <div style={{ marginTop: 12 }}>
-        {!running ? (
-          <button onClick={start} style={{ padding: 10 }}>
-            ▶ Start Live Monitor
-          </button>
-        ) : (
-          <button onClick={stop} style={{ padding: 10 }}>
-            ⏹ Stop
-          </button>
-        )}
-      </div>
-
-      <p style={{ fontSize: 12, marginTop: 10 }}>
-        ⚠️ Works best on Chrome Android + wired headphones
-      </p>
-    </div>
-  );
+  } catch (e) {
+    document.getElementById("error").innerText =
+      "Camera/Mic permission blocked or not supported";
+  }
 }
+
+function stopCamera() {
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+  }
+}
+</script>
+
+</body>
+</html>
